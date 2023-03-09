@@ -60,18 +60,14 @@ status() {
  datetime=$(date "+%a %d.%m.%Y %H:%M")
     
  # CPU Temp
- temp=$(sensors \
-        -u k10temp-pci-00c3 \
-        | grep -E "temp1_input:" \
-        | awk '{print $2}')
+ temp=$(sensors -u k10temp-pci-00c3 | awk '/temp1/{ print $2 }')
 
  # Volume
- vol=$(pactl list sinks \
-       | perl -000ne 'if(/State: RUNNING/){/Volume: front-left: (.+),/; print $1}' \
-       | tr -d ' ')
+ vol=$(pactl list sinks | awk 'c&&!--c;/State: RUNNING*/{c=8}' \
+                        | awk '{ printf("%s/%s/%sdB", $3,$5,$7) }')
     
  # Current keyboard layout
- case "$(xset -q | grep LED | awk '{ print $10 }')" in
+ case "$(xset -q | awk '/LED mask/{ print $10 }')" in
    00000*) KBD="EN" ;;
    00001*) KBD="RU" ;;
    *) KBD="-" ;;
