@@ -39,6 +39,26 @@ filter_empty() {
  fi
 }
 
+ethernet() {
+  eno1=$(nmcli d | awk '/^eno/{ print $3 }') 
+  if [ "$eno1" == "connected" ]; then
+    echo "[ETH: Wired] "
+  else
+    echo "" 
+  fi
+}
+
+wifi() {
+  wifi_status_raw=$(nmcli g | awk 'NR==2 { print $4 }')
+  if [ "$wifi_status_raw" == "enabled" ]; then
+    wifi_net=$(nmcli d | awk '/^wlp4s0/{ print $4 }')
+    echo "[WIFI: ON ${wifi_net}] "
+  else
+    echo "[WIFI: OFF] "
+  fi
+}
+
+
 status() {
  # Remaining battery
  if [ -d "/sys/class/power_supply/BAT0" ]; then
@@ -64,7 +84,7 @@ status() {
 
  # Volume
  vol=$(pactl list sinks | awk 'c&&!--c;/State: RUNNING*/{c=8}' \
-                        | awk '{ printf("%s/%s/%sdB", $3,$5,$7) }')
+                        | awk '{ printf("%s", $5) }')
     
  # Current keyboard layout
  case "$(xset -q | awk '/LED mask/{ print $10 }')" in
@@ -77,6 +97,8 @@ status() {
  items=""
  items+=$(make_spotify_status)
  items+="[CPU Temp: ${temp}] "
+ items+=$(wifi)
+ items+=$(ethernet)
  items+=$(filter_empty "$vol" "[Vol: ${vol}] ")
  items+="[Batt: ${batt}${batt_state}] "
  items+="[CKL: ${KBD}] " 
